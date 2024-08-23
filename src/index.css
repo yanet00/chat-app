@@ -1,0 +1,145 @@
+/* Grundläggande stilar för hela dokumentet */
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #1c1c1c; /* Mörkare svart för en modern look */
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  flex-direction: column; /* Centrera innehåll vertikalt */
+  justify-content: center; /* Centrera innehåll horisontellt */
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #1c1c1c; /* Djupare svart bakgrund */
+  padding: 2em; /* Extra utrymme runt innehållet */
+}
+
+/* Länkar */
+a {
+  font-weight: 600; /* Lättare att läsa länkar */
+  color: #ff66b2; /* Rosa färg */
+  text-decoration: none; /* Ta bort understrykning */
+  transition: color 0.3s ease; /* Mjukare övergång för hover */
+}
+
+a:hover {
+  color: #ff3385; /* Mörkare rosa färg vid hover */
+}
+
+/* Rubriker */
+h1 {
+  font-size: 3.5em; /* Större rubriker */
+  line-height: 1.1;
+  color: #0a0909; /* Rosa rubriker */
+  margin-bottom: 0.5em; /* Mindre mellanrum under rubriken */
+}
+
+/* Knappar */
+button {
+  border-radius: 12px; /* Mjukare hörn */
+  border: none;
+  padding: 0.8em 2em; /* Ökad storlek på knappar */
+  font-size: 1.2em; /* Större text på knappar */
+  font-weight: 600;
+  font-family: inherit;
+  background-color: #ff66b2; /* Rosa färg */
+  color: #ffffff; /* Vit textfärg för kontrast */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Mjuk övergång och lite pop vid hover */
+}
+
+button:hover {
+  background-color: #ff3385; /* Mörkare rosa färg vid hover */
+  transform: scale(1.05); /* Liten pop-effekt vid hover */
+}
+
+button:focus {
+  outline: 2px solid #ff3385; /* Fokus-outline för bättre tillgänglighet */
+  outline-offset: 2px;
+}
+
+button:active {
+  background-color: #e91e63; /* Lite annan färg för aktivt tillstånd */
+}
+
+/* Inmatningsfält och textområden */
+input, textarea {
+  border-radius: 8px;
+  border: 2px solid #ff66b2; /* Rosa kant runt textfält */
+  padding: 1em;
+  font-size: 1em;
+  font-family: inherit;
+  background-color: #333333; /* Mörk bakgrund för textfält */
+  color: #ffffff; /* Vit text för kontrast */
+  margin-bottom: 1.5em; /* Mer utrymme under textfält */
+  transition: border-color 0.3s ease; /* Mjukare övergång för border hover */
+}
+
+input:focus, textarea:focus {
+  border-color: #ff3385; /* Mörkare rosa vid fokus */
+  outline: none; /* Ta bort standard-outlines */
+}
+
+input::placeholder, textarea::placeholder {
+  color: #bbbbbb; /* Ljusare grå för platshållartext */
+}
+
+/* Formulär */
+form {
+  width: 100%;
+  max-width: 400px; /* Begränsa bredden på formulär */
+  padding: 2em; /* Extra utrymme runt formulär */
+  background-color: #2a2a2a; /* Mörkare bakgrund för formulärcontainer */
+  border-radius: 12px; /* Mjukare hörn */
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2); /* Lätt skugga för djup */
+}
+
+/* Rubriker för registrerings- och inloggningssidor */
+.register-container h2, .login-container h2 {
+  color: #ff66b2; /* Rosa färg för rubriker */
+}
+
+/* Media queries för ljus läge */
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  body {
+    background-color: #f7f7f7; /* Ljusare bakgrund för ljusa lägen */
+  }
+
+  a {
+    color: #ff66b2; /* Rosa färg för ljus läge */
+  }
+
+  a:hover {
+    color: #ff3385; /* Mörkare rosa färg för ljus läge */
+  }
+
+  button {
+    background-color: #ff66b2; /* Rosa färg för ljus läge */
+  }
+
+  form {
+    background-color: #ffffff; /* Vit bakgrund för formulärcontainer */
+  }
+
+  input, textarea {
+    background-color: #ffffff; /* Vit bakgrund för textfält */
+    color: #000000; /* Svart text för kontrast */
+  }
+}
