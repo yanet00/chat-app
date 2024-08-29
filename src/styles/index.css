@@ -1,0 +1,262 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #fce4ec;
+  color: #880e4f;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* App Container */
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* SideNav Styles */
+.side-nav {
+  width: 200px;
+  background-color: #880e4f;
+  color: #fce4ec;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.side-nav .user-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.side-nav .user-info img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.side-nav p {
+  margin: 0;
+  font-weight: bold;
+}
+
+.side-nav button {
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  margin-top: auto;
+  transition: background-color 0.3s;
+}
+
+.side-nav button:hover {
+  background-color: #c2185b;
+}
+
+/* Login and Register Styles */
+.login-container, .register-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8bbd0;
+}
+
+.login-container form, .register-container form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.login-container input, .register-container input {
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border: 1px solid #f48fb1;
+  border-radius: 5px;
+}
+
+.login-container button, .register-container button {
+  padding: 10px;
+  font-size: 16px;
+  background-color: #d81b60;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.login-container button:hover, .register-container button:hover {
+  background-color: #ad1457;
+}
+
+.register-link {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.register-link p {
+  margin-bottom: 10px;
+  color: #880e4f;
+}
+
+.register-link button {
+  background-color: #ec407a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.register-link button:hover {
+  background-color: #d81b60;
+}
+
+.feedback {
+  color: red;
+  margin-top: 10px;
+}
+
+/* Chat Styles */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.message strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #880e4f;
+}
+
+.message .delete-button {
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.message-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input-container input {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #f48fb1;
+  border-radius: 5px;
+}
+
+.message-input-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #d81b60;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.message-input-container button:hover {
+  background-color: #ad1457;
+}
+
+.chat-app {
+  display: flex;
+  height: 100vh;
+}
+
+.user-list {
+  width: 25%;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+}
+
+.user-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.user-list li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+
+.user-list li.selected {
+  background-color: #d81b60;
+  color: white;
+}
+
+.chat-container {
+  width: 75%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.message {
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  max-width: 60%;
+}
+
+.message.right {
+  background-color: #d81b60;
+  color: white;
+  margin-left: auto;
+}
+
+.message.left {
+  background-color: #f8bbd0;
+  color: #880e4f;
+}
+
+.message-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input-container input {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.message-input-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+

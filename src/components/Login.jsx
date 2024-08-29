@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCSRFToken } from '../utils/fetchCSRFToken';
+import { getCSRFToken, loginUser } from '../utils/api.js';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -15,63 +15,58 @@ const Login = () => {
     setFeedback('');
 
     try {
-      const csrfToken = await fetchCSRFToken();
-      const response = await fetch('https://chatify-api.up.railway.app/auth/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      console.log('Attempting to fetch CSRF token...');
+      const csrfToken = await getCSRFToken();
+      console.log('CSRF token fetched successfully:', csrfToken);
 
-      const data = await response.json();
+      console.log('Attempting to login with username:', username);
+      const response = await loginUser(username, password, csrfToken);
 
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
+      if (response && response.token) {
+        console.log('Login successful. Storing token and user data.');
+        localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify({
-          id: data.id,
-          username: data.username,
-          avatar: data.avatar,
+          id: response.id,
+          username: response.username,
+          avatar: response.avatar,
         }));
 
-        // Logga in framgång och navigera till Chat
-        console.log('Login successful. Token:', localStorage.getItem('token'));
-        
-        // Navigera till Chat efter att ha lagrat token
-        navigate('/Chat', { replace: true }); // Använd replace för att förhindra att gå tillbaka till login
+        console.log('Navigating to chat page...');
+        navigate('/chat', { replace: true });
       } else {
-        setFeedback(data.message || 'Invalid credentials.');
+        console.warn('Login failed. No token received.');
+        setFeedback('Invalid credentials.');
       }
     } catch (error) {
-      setFeedback('An error occurred. Please try again.');
+      console.error('Error during login:', error);
+      setFeedback('Login failed. Please try again.');
     } finally {
       setLoading(false);
+      console.log('Loading state set to false');
     }
+  };
+
+  const goToRegister = () => {
+    console.log('Navigating to register page...');
+    navigate('/register');
   };
 
   return (
     <div className="login-container">
-      <div className="nav-bar">
-        <h1>Yapster</h1>
-        <div className="nav-buttons">
-          <button onClick={() => navigate('/login')}>Login</button>
-          <button onClick={() => navigate('/register')}>Register</button>
-        </div>
-      </div>
+      <h2>Login</h2>
       <form onSubmit={handleLogin}>
         <input
           type="text"
           placeholder="Username"
           value={username}
-          onChange={(e) => setUsername(e.target.value.trim())}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value.trim())}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
         <button type="submit" disabled={loading}>
@@ -79,6 +74,11 @@ const Login = () => {
         </button>
       </form>
       {feedback && <p className="feedback">{feedback}</p>}
+      
+      <div className="register-link">
+        <p>Don't have an account?</p>
+        <button onClick={goToRegister}>Register Here</button>
+      </div>
     </div>
   );
 };

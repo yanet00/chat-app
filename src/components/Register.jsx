@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCSRFToken } from '../utils/fetchCSRFToken'; // Importera funktionen
+import axios from 'axios';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -11,70 +11,62 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
-    e.preventDefault(); // Förhindra att formuläret skickar om sidan
-    setLoading(true); // Visa laddningsindikator
+    e.preventDefault();
+    setLoading(true);
     setFeedback('');
 
-    // Hämta CSRF-token
-    const csrfToken = await fetchCSRFToken();
-
-    if (!csrfToken) {
-      setFeedback('Failed to fetch CSRF token.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Skicka POST-begäran till registrerings-API:et
-      const response = await fetch('https://chatify-api.up.railway.app/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json', // Vi skickar JSON-data
-          'X-CSRF-Token': csrfToken, // Skicka CSRF-token i headern
-        },
-        body: JSON.stringify({ username: username.trim(), email: email.trim(), password }), // Skicka registreringsdata som JSON
-      });
+      console.log('Attempting to fetch CSRF token...');
+      const csrfResponse = await axios.patch('https://chatify-api.up.railway.app/csrf');
+      const csrfToken = csrfResponse.data.csrfToken;
+      console.log('CSRF token fetched successfully:', csrfToken);
 
-      const data = await response.json();
-      setLoading(false); // Avsluta laddning
+      console.log('Attempting to register with username:', username, 'and email:', email);
+      const response = await axios.post('https://chatify-api.up.railway.app/auth/register', 
+        { username, email, password },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        setFeedback(data.message || 'An error occurred.');
-      } else {
+      console.log('Server response:', response);
+
+      if (response.status === 200) {
+        console.log('Registration successful:', response.data);
         setFeedback('Registration successful! Redirecting to login...');
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
+        setTimeout(() => navigate('/login', { replace: true }), 2000);
+      } else {
+        console.warn('Unexpected response status:', response.status);
+        setFeedback('Unexpected error occurred. Please try again.');
       }
     } catch (error) {
-      setFeedback('An error occurred. Please try again.');
+      console.error('Error during registration:', error.response?.data || error.message);
+      setFeedback(error.response?.data?.message || 'Registration failed. Try again.');
+    } finally {
       setLoading(false);
+      console.log('Loading state set to false');
     }
   };
 
   return (
     <div className="register-container">
-      <div className="nav-bar">
-        <h1>Yapster</h1>
-        <div className="nav-buttons">
-          <button onClick={() => navigate('/login')}>Login</button>
-          <button onClick={() => navigate('/register')}>Register</button>
-        </div>
-      </div>
       <h2>Register</h2>
       <form onSubmit={handleRegister}>
         <input
           type="text"
           placeholder="Username"
           value={username}
-          onChange={(e) => setUsername(e.target.value.trim())} // Sanera inmatning
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value.trim())} // Sanera inmatning
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
@@ -88,7 +80,7 @@ const Register = () => {
           {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
-      {feedback && <p className="feedback">{feedback}</p>} {/* Visa feedback till användaren */}
+      {feedback && <p className="feedback">{feedback}</p>}
     </div>
   );
 };

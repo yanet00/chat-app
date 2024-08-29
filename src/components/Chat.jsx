@@ -1,200 +1,237 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import DOMPurify from 'dompurify';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  getCSRFToken,
+  fetchUsers,
+  fetchConversations,
+  fetchMessages,
+  sendMessage,
+  deleteMessage,
+  createConversation,
+} from "../utils/api.js";
+import DOMPurify from "dompurify";
 
 const Chat = () => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const [conversations, setConversations] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState("");
   const navigate = useNavigate();
+  const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
-  const fetchCsrfToken = async () => {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("No token found, redirecting to login...");
+      navigate("/login", { replace: true });
+    } else {
+      console.log("Token found, loading users and conversations...");
+      loadUsers(token);
+      loadConversations(token);
+    }
+  }, [navigate]);
+
+  const loadUsers = async (token) => {
     try {
-      const response = await axios.patch('https://chatify-api.up.railway.app/csrf');
-      return response.data.csrfToken;
+      const fetchedUsers = await fetchUsers(token);
+      setUsers(fetchedUsers);
     } catch (error) {
-      console.error('Error fetching CSRF token:', error);
-      throw error;
+      handleFetchError(error, "users");
     }
   };
 
-  const fetchUsers = async () => {
+  const loadConversations = async (token) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const response = await axios.get('https://chatify-api.up.railway.app/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      setUsers(response.data);
+      const fetchedConversations = await fetchConversations(token);
+      setConversations(fetchedConversations);
     } catch (error) {
-      setFeedback('Error fetching users.');
-      console.error('Error fetching users:', error);
+      handleFetchError(error, "conversations");
     }
   };
 
-  const fetchMessages = async (chatWithUserId) => {
-    setLoading(true);
+  const loadMessages = async (userId, conversationId) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      const token = localStorage.getItem("token");
+      const fetchedMessages = await fetchMessages(
+        token,
+        userId,
+        conversationId
+      );
+      setMessages(fetchedMessages);
+    } catch (error) {
+      setFeedback("Failed to load messages.");
+    }
+  };
+
+  const handleUserSelect = async (user) => {
+    setSelectedUser(user);
+
+    let conversation = conversations.find(
+      (conv) =>
+        (conv.userId === loggedInUser.id && conv.otherUserId === user.userId) ||
+        (conv.userId === user.userId && conv.otherUserId === loggedInUser.id)
+    );
+
+    if (!conversation) {
+      try {
+        console.log("No existing conversation, starting a new one...");
+        const token = localStorage.getItem("token");
+        const newConversation = await createConversation(token, user.userId);
+
+        conversation = {
+          id: newConversation.conversationId,
+          userId: loggedInUser.id,
+          otherUserId: user.userId,
+        };
+
+        setConversations([...conversations, conversation]);
+      } catch (error) {
+        setFeedback("Failed to create new conversation.");
+        console.error("Error creating conversation:", error);
         return;
       }
-
-      const response = await axios.get(`https://chatify-api.up.railway.app/messages?chatWith=${chatWithUserId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      setMessages(response.data);
-    } catch (error) {
-      setFeedback('Error fetching messages.');
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
     }
+
+    loadMessages(user.userId, conversation.id);
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser) {
-      setFeedback('Select a user to chat with and enter a message.');
+    if (!newMessage.trim()) {
+      setFeedback("Message cannot be empty.");
       return;
     }
 
     setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
+    const token = localStorage.getItem("token");
 
-      const csrfToken = await fetchCsrfToken();
+    try {
+      const csrfToken = await getCSRFToken();
       const sanitizedMessage = DOMPurify.sanitize(newMessage.trim());
 
-      const response = await axios.post('https://chatify-api.up.railway.app/messages', { 
-        text: sanitizedMessage, 
-        recipientId: selectedUser.id 
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken,
-        },
-      });
+      const conversation = conversations.find(
+        (conv) =>
+          (conv.userId === loggedInUser.id &&
+            conv.otherUserId === selectedUser.userId) ||
+          (conv.userId === selectedUser.userId &&
+            conv.otherUserId === loggedInUser.id)
+      );
 
-      setMessages([...messages, response.data]); 
-      setNewMessage('');
-    } catch (error) {
-      setFeedback('Error sending message.');
-      console.error('Error sending message:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
-    fetchMessages(user.id);
-  };
-
-  const handleDeleteMessage = async (messageId) => {
-    if (!messageId) return;
-
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      if (!conversation) {
+        setFeedback("No valid conversation found.");
+        setLoading(false);
         return;
       }
 
-      const csrfToken = await fetchCsrfToken();
+      const newMsg = await sendMessage(
+        sanitizedMessage,
+        conversation.id,
+        token,
+        csrfToken
+      );
 
-      const response = await axios.delete(`https://chatify-api.up.railway.app/messages/${messageId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken,
-        },
-      });
-
-      console.log('Delete Response:', response.data);
-
-      if (response.status === 200) {
-        setMessages(messages.filter((message) => message.id !== messageId));
-        setFeedback('Message deleted successfully.');
+      if (newMsg && newMsg.id) {
+        setMessages([...messages, newMsg]);
+        setNewMessage("");
+        setFeedback("Message sent successfully.");
       } else {
-        setFeedback('Failed to delete the message.');
+        setFeedback("Failed to send message, unexpected response format.");
       }
     } catch (error) {
-      console.error('Error deleting message:', error.response || error.message);
-      setFeedback('Error deleting message.');
+      setFeedback("Failed to send message.");
+      console.error(
+        "Error sending message:",
+        error.response || error.message || error
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    } else {
-      fetchUsers();
+  const handleDeleteMessage = async (msgId) => {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const csrfToken = await getCSRFToken();
+      await deleteMessage(msgId, token, csrfToken);
+      setMessages(messages.filter((message) => message.id !== msgId));
+      setFeedback("Message deleted successfully.");
+    } catch (error) {
+      setFeedback("Failed to delete message.");
+      console.error("Error deleting message:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [navigate]);
+  };
+
+  const handleFetchError = (error, resourceType) => {
+    if (error.response && error.response.status === 403) {
+      setFeedback(
+        `Access denied. Please log in again to fetch ${resourceType}.`
+      );
+      navigate("/login", { replace: true });
+    } else {
+      setFeedback(`Failed to load ${resourceType}.`);
+    }
+  };
 
   return (
     <div className="chat-app">
       <div className="user-list">
         <h2>Users</h2>
         <ul>
-          {users.map((u) => (
-            <li key={u.id} onClick={() => handleUserSelect(u)} className={`user-item ${u.id === selectedUser?.id ? 'selected' : ''}`}>
-              {u.username}
+          {users.map((user) => (
+            <li
+              key={user.userId}
+              onClick={() => handleUserSelect(user)}
+              className={`user-item ${
+                user.userId === selectedUser?.userId ? "selected" : ""
+              }`}
+            >
+              {user.username}
             </li>
           ))}
         </ul>
       </div>
 
       <div className="chat-container">
-        {selectedUser && (
+        {selectedUser ? (
           <>
-            <div className="chat-header">
-              <h3>Chatting with {selectedUser.username}</h3>
-            </div>
-
-            <div className="messages">
-              {loading && <p>Loading messages...</p>}
+            <h3>Chat with {selectedUser.username}</h3>
+            <div className="messages-container">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`message ${message.userId === user.id ? 'right' : 'left'}`}
+                  className={`message ${
+                    message.userId === loggedInUser.id ? "right" : "left"
+                  }`}
                 >
-                  <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.text) }} />
-                  {/* Always show the delete button */}
-                  <button
-                    onClick={() => handleDeleteMessage(message.id)}
-                    className="delete-button"
-                  >
-                    🗑️
-                  </button>
+                  <strong>
+                    {message.userId === loggedInUser.id
+                      ? "You"
+                      : selectedUser.username}
+                  </strong>
+                  <p
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(message.text),
+                    }}
+                  />
+                  {message.userId === loggedInUser.id && (
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="delete-button"
+                    >
+                      🗑️ Delete
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div className="new-message">
+            <div className="message-input-container">
               <input
                 type="text"
                 value={newMessage}
@@ -202,15 +239,15 @@ const Chat = () => {
                 placeholder="Type a message"
               />
               <button onClick={handleSendMessage} disabled={loading}>
-                {loading ? 'Sending...' : 'Send'}
+                {loading ? "Sending..." : "Send"}
               </button>
             </div>
           </>
+        ) : (
+          <p>Select a user to start chatting</p>
         )}
-
-        {!selectedUser && <p>Please select a user to start chatting.</p>}
-        {feedback && <p className="feedback">{feedback}</p>}
       </div>
+      {feedback && <p className="feedback">{feedback}</p>}
     </div>
   );
 };
