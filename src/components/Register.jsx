@@ -6,6 +6,7 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [image, setImage] = useState(null); 
   const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const Register = () => {
 
       console.log('Server response:', response);
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         console.log('Registration successful:', response.data);
         setFeedback('Registration successful! Redirecting to login...');
         setTimeout(() => navigate('/login', { replace: true }), 2000);
@@ -48,6 +49,17 @@ const Register = () => {
     } finally {
       setLoading(false);
       console.log('Loading state set to false');
+    }
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0]; 
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result); 
+      };
+      reader.readAsDataURL(file); 
     }
   };
 
@@ -76,6 +88,12 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <input
+          type='file'
+          accept="image/*" 
+          onChange={handleImageChange}
+        />
+        
         <button type="submit" disabled={loading}>
           {loading ? 'Registering...' : 'Register'}
         </button>

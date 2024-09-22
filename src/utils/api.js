@@ -1,9 +1,16 @@
 import axios from 'axios';
-
 import { v4 as uuidv4 } from 'uuid';
+
 const BASE_URL = 'https://chatify-api.up.railway.app';
 
-// Function to fetch CSRF token
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+
 export const getCSRFToken = async () => {
   try {
     const response = await axios.patch(`${BASE_URL}/csrf`);
@@ -14,7 +21,8 @@ export const getCSRFToken = async () => {
     throw error;
   }
 };
-// Fetch all users
+
+
 export const fetchUsers = async (token) => {
   try {
     const response = await axios.get(`${BASE_URL}/users`, {
@@ -28,7 +36,7 @@ export const fetchUsers = async (token) => {
   }
 };
 
-// Fetch conversation IDs
+
 export const fetchConversations = async (token) => {
   try {
     const response = await axios.get(`${BASE_URL}/conversations`, {
@@ -42,7 +50,7 @@ export const fetchConversations = async (token) => {
   }
 };
 
-// Fetch messages by userId and/or conversationId
+
 export const fetchMessages = async (token, userId = null, conversationId = null) => {
   try {
     const response = await axios.get(`${BASE_URL}/messages`, {
@@ -53,19 +61,6 @@ export const fetchMessages = async (token, userId = null, conversationId = null)
     return response.data;
   } catch (error) {
     console.error('Error fetching messages:', error);
-    throw error;
-  }
-};
-// Retrieve user details by ID
-export const getUserById = async (token, userId) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log('User details retrieved:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error retrieving user details:', error.response?.status, error.message);
     throw error;
   }
 };
@@ -88,9 +83,10 @@ export const inviteUserToConversation = async (token, userId, conversationId) =>
   }
 };
 
+
 export const createConversation = async (token, userId) => {
   try {
-    // Generate a new UUID for the conversation
+    
     const conversationId = uuidv4();
 
     const response = await axios.post(
@@ -101,8 +97,7 @@ export const createConversation = async (token, userId) => {
       }
     );
     console.log('Conversation created:', response.data);
-    
-    // Return the conversation ID and a message indicating the invite was sent
+
     return { id: conversationId, message: response.data.message };
   } catch (error) {
     console.error('Error creating conversation:', error);
@@ -110,7 +105,7 @@ export const createConversation = async (token, userId) => {
   }
 };
 
-// Send a message with a conversationId
+
 export const sendMessage = async (message, conversationId, token, csrfToken) => {
   try {
     const response = await axios.post(
@@ -132,7 +127,7 @@ export const sendMessage = async (message, conversationId, token, csrfToken) => 
   }
 };
 
-// Delete a message
+
 export const deleteMessage = async (msgId, token, csrfToken) => {
   try {
     await axios.delete(`${BASE_URL}/messages/${msgId}`, {
@@ -149,16 +144,20 @@ export const deleteMessage = async (msgId, token, csrfToken) => {
 };
 
 
-const apiClient = axios.create({
-  baseURL: 'https://chatify-api.up.railway.app',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export const fetchUserById = async (userId, token) => {
+  try {
+    const response = await apiClient.get(`/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('User fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+};
 
 
-
-// Register a new user
 export const registerUser = async (username, password, csrfToken) => {
   try {
     const response = await apiClient.post('/auth/register', 
@@ -175,7 +174,6 @@ export const registerUser = async (username, password, csrfToken) => {
   }
 };
 
-// Login user and generate token
 export const loginUser = async (username, password, csrfToken) => {
   try {
     const response = await apiClient.post('/auth/token', 
@@ -192,50 +190,11 @@ export const loginUser = async (username, password, csrfToken) => {
   }
 };
 
-
-
-// Create a new message
-export const createMessage = async (text, recipientId, token, csrfToken) => {
-  try {
-    const response = await apiClient.post('/messages', 
-      { text, recipientId },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken,
-        },
-      }
-    );
-    console.log('Message created:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating message:', error);
-    throw error;
-  }
-};
-
-
-
-// Fetch a specific user by ID
-export const fetchUserById = async (userId, token) => {
-  try {
-    const response = await apiClient.get(`/users/${userId}`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    console.log('User fetched:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    throw error;
-  }
-};
-
-// Update the current user's details
 export const updateUser = async (userData, token, csrfToken) => {
   try {
     const response = await apiClient.put('/user', userData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'X-CSRF-Token': csrfToken,
       },
     });
@@ -247,12 +206,12 @@ export const updateUser = async (userData, token, csrfToken) => {
   }
 };
 
-// Delete a specific user by ID
+
 export const deleteUserById = async (userId, token, csrfToken) => {
   try {
     const response = await apiClient.delete(`/users/${userId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'X-CSRF-Token': csrfToken,
       },
     });
@@ -264,5 +223,17 @@ export const deleteUserById = async (userId, token, csrfToken) => {
   }
 };
 
-
-
+export const logoutUser = async (token, csrfToken) => {
+  try {
+    await axios.post(`${BASE_URL}/auth/logout`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-CSRF-Token': csrfToken,
+      },
+    });
+    console.log('User logged out');
+  } catch (error) {
+    console.error('Error logging out user:', error);
+    throw error;
+  }
+};

@@ -10,6 +10,7 @@ import {
   createConversation,
 } from "../utils/api.js";
 import DOMPurify from "dompurify";
+import chatData from './chat.json'; 
 
 const Chat = () => {
   const [users, setUsers] = useState([]);
@@ -53,13 +54,14 @@ const Chat = () => {
   };
 
   const loadMessages = async (userId, conversationId) => {
+    if (!userId || !conversationId) {
+      
+      setMessages(chatData);
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
-      const fetchedMessages = await fetchMessages(
-        token,
-        userId,
-        conversationId
-      );
+      const fetchedMessages = await fetchMessages(token, userId, conversationId);
       setMessages(fetchedMessages);
     } catch (error) {
       setFeedback("Failed to load messages.");
@@ -100,55 +102,59 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) {
-      setFeedback("Message cannot be empty.");
-      return;
+        setFeedback("Message cannot be empty.");
+        return;
     }
 
     setLoading(true);
     const token = localStorage.getItem("token");
 
     try {
-      const csrfToken = await getCSRFToken();
-      const sanitizedMessage = DOMPurify.sanitize(newMessage.trim());
+        const csrfToken = await getCSRFToken();
+        const sanitizedMessage = DOMPurify.sanitize(newMessage.trim());
 
-      const conversation = conversations.find(
-        (conv) =>
-          (conv.userId === loggedInUser.id &&
-            conv.otherUserId === selectedUser.userId) ||
-          (conv.userId === selectedUser.userId &&
-            conv.otherUserId === loggedInUser.id)
-      );
+        const conversation = conversations.find(
+            (conv) =>
+                (conv.userId === loggedInUser.id &&
+                    conv.otherUserId === selectedUser.userId) ||
+                (conv.userId === selectedUser.userId &&
+                    conv.otherUserId === loggedInUser.id)
+        );
 
-      if (!conversation) {
-        setFeedback("No valid conversation found.");
-        setLoading(false);
-        return;
-      }
+        if (!conversation) {
+            setFeedback("No valid conversation found.");
+            setLoading(false);
+            return;
+        }
 
-      const newMsg = await sendMessage(
-        sanitizedMessage,
-        conversation.id,
-        token,
-        csrfToken
-      );
+        const newMsg = await sendMessage(
+            sanitizedMessage,
+            conversation.id,
+            token,
+            csrfToken
+        );
 
-      if (newMsg && newMsg.id) {
-        setMessages([...messages, newMsg]);
-        setNewMessage("");
-        setFeedback("Message sent successfully.");
-      } else {
-        setFeedback("Failed to send message, unexpected response format.");
-      }
+        if (newMsg && newMsg.latestMessage) {
+            
+            setMessages((prevMessages) => [
+                ...prevMessages, 
+                newMsg.latestMessage 
+            ]);
+            setNewMessage(""); 
+            setFeedback("Message sent successfully.");
+        } else {
+            setFeedback("Failed to send message, unexpected response format.");
+        }
     } catch (error) {
-      setFeedback("Failed to send message.");
-      console.error(
-        "Error sending message:",
-        error.response || error.message || error
-      );
+        setFeedback("Failed to send message.");
+        console.error(
+            "Error sending message:",
+            error.response || error.message || error
+        );
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const handleDeleteMessage = async (msgId) => {
     setLoading(true);
