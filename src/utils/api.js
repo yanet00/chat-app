@@ -31,7 +31,12 @@ export const fetchUsers = async (token) => {
     console.log('Users fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error fetching users:', error);
+    // Logga mer detaljerad information om felet
+    if (error.response) {
+      console.error('Error fetching users:', error.response.status, error.response.data);
+    } else {
+      console.error('Error fetching users:', error.message);
+    }
     throw error;
   }
 };
